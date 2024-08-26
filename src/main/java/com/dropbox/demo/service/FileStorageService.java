@@ -13,7 +13,7 @@ public interface FileStorageService {
 
     byte[] readFile(String fileName);
 
-    List<FileDto> getAllFiles();
+    List<FileDto> getAllFiles(String file, int pageNumber, int pageSize);
 
     FileDeleteRes deleteFile(String fileName);
 }

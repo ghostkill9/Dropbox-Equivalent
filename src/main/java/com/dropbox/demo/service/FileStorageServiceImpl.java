@@ -18,6 +18,10 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -64,7 +68,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         return fileUploadRes;
     }
 
-    //
+    //Save metadata file to DB, or Update if entity already exists
     void saveFileMetaData(String fileName,String fileType, String s3Url){
         log.info("Saving file meta data for file {}",fileName);
         FileMetaDataEntity fileMetaDataEntity = fileMetaDataRepo.findByFileName(fileName);
@@ -84,6 +88,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         fileMetaDataRepo.save(fileMetaDataEntity);
     }
 
+
     public static File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
 
         File tempFile = File.createTempFile("temp", multipartFile.getOriginalFilename());
@@ -91,7 +96,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         return tempFile;
     }
-
+    //Fetches File from S3 bucket and converts to byte array
     public byte[] readFile(String fileName){
         log.info("Getting file {}",fileName);
         try{
@@ -106,10 +111,12 @@ public class FileStorageServiceImpl implements FileStorageService {
         return null;
     }
 
+    //Returns list of files from db.
     @Override
-    public List<FileDto> getAllFiles() {
+    public List<FileDto> getAllFiles(String file, int pageNumber, int pageSize) {
         log.info("Getting all files from DB");
-        List<FileMetaDataEntity> fileMetaDataEntityList = fileMetaDataRepo.findAll();
+        Pageable pageable = PageRequest.of(pageNumber,pageSize, Sort.by("updatedAt"));
+        List<FileMetaDataEntity> fileMetaDataEntityList = fileMetaDataRepo.findSimilarByFileName(file,pageSize,pageNumber);
         if(fileMetaDataEntityList.isEmpty()){
             return null;
         }
@@ -125,6 +132,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         return fileDtoList;
     }
 
+    //Deletes a file in S3 bucket
     @Override
     public FileDeleteRes deleteFile(String fileName) {
         try{

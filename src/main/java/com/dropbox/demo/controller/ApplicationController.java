@@ -52,10 +52,10 @@ public class ApplicationController {
             return ResponseEntity.internalServerError().body(null);
     }
 
-    @GetMapping
-    public ResponseEntity<List<FileDto>> getAllFiles(){
+    @GetMapping("/{file}")
+    public ResponseEntity<List<FileDto>> getFileByFileName(@PathVariable String file, @RequestParam int pageNumber, @RequestParam int pageSize){
             log.info("Fetching all files meta data");
-            List<FileDto> fileDtoList = fileStorageService.getAllFiles();
+            List<FileDto> fileDtoList = fileStorageService.getAllFiles(file,pageNumber,pageSize);
             return ResponseEntity.ok()
                     .body(fileDtoList);
 
